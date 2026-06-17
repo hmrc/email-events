@@ -1,0 +1,28 @@
+{
+  "scopes": [],
+  "api": {
+    "name" : "Email Events",
+    "description" : "This will be used to capture webhook events from IMI",
+    "context" : "organisations/imi",
+    "categories": ["OTHER"],
+    "versions" : [
+      {
+        "version" : "1.0",
+        "access" : {
+          "type" : "PUBLIC",
+          "whitelistApplicationIds" : []
+        },
+        "status" : "STABLE",
+        "endpoints" : [
+          {
+            "uriPattern" : "/email-events",
+            "endpointName": "sample GET",
+            "method" : "GET",
+            "authType" : "NONE",
+            "throttlingTier" : "UNLIMITED"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,3 @@
+# microservice specific routes
+
+POST       /email-events                  uk.gov.hmrc.emailevents.controllers.EventsController.events()

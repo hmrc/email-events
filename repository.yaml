@@ -6,4 +6,3 @@ service-type: Backend
 tags: []
 test-repositories:
   - digital-contact-performance-tests
-

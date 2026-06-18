@@ -1,8 +1,3 @@
-## Notice
-
-This repository has been archived. The latest code has been migrated (in June 2026) to the public repository:
-https://github.com/hmrc/email-events
-
 # Email Events API
 This is an API to recieve email events from Email Provider (e.g. IMI) and send them to the Email service.
 

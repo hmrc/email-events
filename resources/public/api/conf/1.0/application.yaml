@@ -1,0 +1,169 @@
+
+openapi: "3.0.3"
+
+info:
+  version: 1.0.0
+  title: Email Events
+  description: |
+    # Overview
+    This API receives email-events from IMI and communication is by webhooks
+
+servers:
+  - url: https://test-api.service.hmrc.gov.uk/misc/email-events
+    description: Sandbox
+  - url: https://api.service.hmrc.gov.uk/misc/email-events
+    description: Production
+
+components:
+  responses:
+    badOrExpiredTokenResponse:
+      description: |
+        Bad or expired token.
+        This can happen if the user or HMRC revoked or expired an access token.
+        To fix, you should re-authenticate the user.
+      content:
+        application/json:
+          example:
+    forbiddenResponse:
+      description: |
+        Bad OAuth request (wrong consumer key, bad nonce, expired
+        timestamp...). Unfortunately, re-authenticating the user won't help here.
+      content:
+        application/json:
+          example:
+  parameters:
+    acceptHeader:
+      name: Accept
+      in: header
+      schema:
+        type: string
+        enum: [
+            "application/vnd.hmrc.1.0+json",
+            "application/vnd.hmrc.1.0+xml"
+        ]
+      required: true
+  securitySchemes:
+    userRestricted:
+      type: oauth2
+      description: |
+        HMRC supports OAuth 2.0 for authenticating user restricted API requests using an OAuth 2.0 Bearer Token in the AUTHORIZATION header.
+        See https://developer.service.hmrc.gov.uk/api-documentation/docs/authorisation/user-restricted-endpoints for details.
+      flows:
+        authorizationCode:
+          authorizationUrl: https://api.service.hmrc.gov.uk/oauth/authorize
+          tokenUrl: https://api.service.hmrc.gov.uk/oauth/token
+          refreshUrl: https://api.service.hmrc.gov.uk/oauth/refresh
+          scopes:
+            email-events: sample text
+    applicationRestricted:
+      type: oauth2
+      description: |
+        HMRC supports OAuth 2.0 for authenticating application restricted API requests using an OAuth 2.0 Bearer Token in the AUTHORIZATION header.
+        See https://developer.service.hmrc.gov.uk/api-documentation/docs/authorisation/application-restricted-endpoints for details.
+      flows:
+        clientCredentials:
+          tokenUrl: https://api.service.hmrc.gov.uk/oauth/token
+          scopes: {}
+paths:
+  /email-events:
+    post:
+      summary: Events from IMI using an OAuth 2.0
+      description: |
+        Receive events from imi. uses an OAuth 2.0 'access_token'
+      tags:
+        - email-events
+      parameters:
+        - $ref: '#/components/parameters/acceptHeader'
+      requestBody:
+        description: Event data
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                deliveryInfo:
+                  type: object
+                  properties:
+                    timeStamp:
+                      type: string
+                      format: date-time
+                    Description:
+                      type: string
+                    code:
+                      type: string
+                    deliveryChannel:
+                      type: string
+                    additionalInfo:
+                      type: string
+                    destination:
+                      type: string
+                    destinationType:
+                      type: string
+                    deliveryStatus:
+                      type: string
+                subtid:
+                  type: string
+                transid:
+                  type: string
+                callbackData:
+                  type: string
+                correlationid:
+                  type: string
+              example:
+                deliveryInfoNotification:
+                  deliveryInfo:
+                    timeStamp: "2022-12-07T14:40:46.886Z"
+                    Description: "Submitted"
+                    code: "7501"
+                    deliveryChannel: "email"
+                    additionalInfo: ""
+                    destination: "test.dc@digital.hmrc.gov.uk"
+                    destinationType: "email"
+                    deliveryStatus: "Submitted"
+                  subtid: ""
+                  transid: "4310b3f8-9d89-47a3-9c72-4482f9ef14c9"
+                  callbackData: "eyJyZWdpbWUiOiJzT"
+                  correlationid: "4310b3f8-9d89-47a3-9c72-4482f9ef14c9"
+      responses:
+        200:
+          description: "Event processed"
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  {
+                    "message": "true"
+                  }
+        202:
+          description: "Event accepted but not processed, because we are not interested in this event type"
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  {
+                    "message": "true"
+                  }
+        401:
+          description: "UnAuthorised"
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: "BadRequest payload is invalid"
+          content:
+            application/json:
+              schema:
+                type: object
+        500:
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                type: object
+
+      security:
+        - applicationRestricted: []

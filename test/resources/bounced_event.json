@@ -1,0 +1,18 @@
+{
+  "deliveryInfoNotification": {
+    "deliveryInfo": {
+      "timeStamp": "2022-12-07T14:40:46.886Z",
+      "Description": "Transient_ContentRejected",
+      "code": "7520",
+      "deliveryChannel": "email",
+      "additionalInfo": "",
+      "destination": "test.dc@digital.hmrc.gov.uk",
+      "destinationType": "email",
+      "deliveryStatus": "Bounce"
+    },
+    "subtid": "",
+    "transid": "4310b3f8-9d89-47a3-9c72-4482f9ef14c9",
+    "callbackData": "eyJuYW1lIjoiZW5jcnlwdGVkU3RyaW5nIiwicmVnaW1lIjoiZW5jcnlwdGVkU3RyaW5nIiwidGVtcGxhdGVJZCI6ImVuY3J5cHRlZFN0cmluZyIsInBsYXRmb3JtIjoiZW5jcnlwdGVkU3RyaW5nIiwiQ29udGFjdFBvbGljeUdyb3VwSWQiOiIifQ==",
+    "correlationid": "4310b3f8-9d89-47a3-9c72-4482f9ef14c9"
+  }
+}

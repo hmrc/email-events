@@ -1,0 +1,18 @@
+{
+  "deliveryInfoNotification": {
+    "deliveryInfo": {
+      "timeStamp": "2023-05-11T17:04:58.156+01:00",
+      "code": "9002",
+      "Description": "Recipient has not consented to message",
+      "deliveryChannel": "email",
+      "destination": "test.dc@digital.hmrc.gov.uk",
+      "additionalInfo": "",
+      "destinationType": "email",
+      "deliveryStatus": "Failed"
+    },
+    "subtid": "",
+    "transid": "ceb2adf2-d617-4d32-9574-4fcdb34b4584",
+    "callbackData": "eyJuYW1lIjoiZW5jcnlwdGVkU3RyaW5nIiwicmVnaW1lIjoiZW5jcnlwdGVkU3RyaW5nIiwidGVtcGxhdGVJZCI6ImVuY3J5cHRlZFN0cmluZyIsInBsYXRmb3JtIjoiZW5jcnlwdGVkU3RyaW5nIiwiQ29udGFjdFBvbGljeUdyb3VwSWQiOiIifQ==",
+    "correlationid": "b1c9c3be-41c7-4d0b-ab9e-68de1e636b1e"
+  }
+}

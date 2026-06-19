@@ -1,1 +1,8 @@
 repoVisibility: public_0C3F0CE3E6E6448FAD341E7BFA50FCD333E06A20CFF05FCACE61154DDBBADF71
+digital-service: Digital Contact
+description: This is an API to receive email events from Email Provider (e.g. IMI) and send them to the Email service.
+type: service
+service-type: Backend
+tags: []
+test-repositories:
+  - digital-contact-performance-tests

@@ -1,0 +1,17 @@
+{
+  "api": {
+    "name": "Email Events",
+    "description": "Email events using OpenAPI and published on the HMRC API Developer Hub.",
+    "context": "misc/email-events",
+    "versions": [
+      {
+        "access": {
+        "type": "PRIVATE"
+        },
+        "version": "1.0",
+        "status": "STABLE",
+        "endpointsEnabled": true
+      }
+    ]
+  }
+}

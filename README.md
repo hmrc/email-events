@@ -54,3 +54,4 @@ sm --stop DC_EMAIL_EVENTS_IT
 ```
 
 Once started, you can run the integration tests `sbt> it:test` 
+

@@ -24,9 +24,10 @@ import uk.gov.hmrc.emailevents.models.controllers.RawEvent
 import org.mockito.Mockito.when
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatestplus.mockito.MockitoSugar.mock
-import play.api.libs.json.Json
+import play.api.libs.json.{ JsValue, Json }
 import uk.gov.hmrc.emailevents.models.{ EventIgnored, EventSaved }
 import uk.gov.hmrc.emailevents.models.connector.Event
+
 import java.util.UUID
 import scala.concurrent.Future
 import scala.io.Source
@@ -36,16 +37,27 @@ class EventsProcessingSpec extends AnyWordSpec with Matchers with ScalaFutures {
   "Event processing" must {
     "send correct event object to the EmailConnector" in new TestCase {
       when(emailConnectorMock.send(any[Event])).thenReturn(Future.successful(EventSaved("true")))
-      val jsonData = Json.parse(Source.fromResource("submitted_event.json").mkString)
-      val rawEvent = jsonData.as[RawEvent]
+
+      val jsonData: JsValue = Json.parse(Source.fromResource("submitted_event.json").mkString)
+      val rawEvent: RawEvent = jsonData.as[RawEvent]
 
       val eventsProcessing = new EventsProcessingImpl(emailConnectorMock)
       eventsProcessing(rawEvent).futureValue mustBe EventSaved("true")
     }
+
+    "return EventIgnored for UnInterested delivery status" in new TestCase {
+      val jsonData: JsValue = Json.parse(deliveryInfoNotifWithStatusUninterested)
+      val rawEvent: RawEvent = jsonData.as[RawEvent]
+
+      val eventsProcessing = new EventsProcessingImpl(emailConnectorMock)
+      eventsProcessing(rawEvent).futureValue mustBe EventIgnored("Event is ignored and its not processed")
+    }
+
     "return UnInterested if event is not in our list of interested events" in new TestCase {
       when(emailConnectorMock.send(any[Event])).thenReturn(Future.successful(EventSaved("true")))
-      val jsonData = Json.parse(Source.fromResource("invalid_event.json").mkString)
-      val rawEvent = jsonData.as[RawEvent]
+
+      val jsonData: JsValue = Json.parse(Source.fromResource("invalid_event.json").mkString)
+      val rawEvent: RawEvent = jsonData.as[RawEvent]
 
       val eventsProcessing = new EventsProcessingImpl(emailConnectorMock)
       eventsProcessing(rawEvent).futureValue mustBe EventIgnored("Event is ignored and its not processed")
@@ -53,9 +65,26 @@ class EventsProcessingSpec extends AnyWordSpec with Matchers with ScalaFutures {
   }
 
   class TestCase {
-    val emailConnectorMock = mock[EmailConnector]
+    val emailConnectorMock: EmailConnector = mock[EmailConnector]
 
-    val transId = UUID.randomUUID()
-    val correlationId = UUID.randomUUID()
+    val transId: UUID = UUID.randomUUID()
+    val correlationId: UUID = UUID.randomUUID()
+
+    val deliveryInfoNotifWithStatusUninterested: String =
+      """{"deliveryInfoNotification":{
+        |"deliveryInfo":{"timeStamp":"2022-12-07T14:40:46.886Z",
+        |"Description":"Submitted",
+        |"code":"7501",
+        |"deliveryChannel":"email",
+        |"additionalInfo":"",
+        |"destination":"test.dc@digital.hmrc.gov.uk",
+        |"destinationType":"email",
+        |"deliveryStatus":"UnInterested"
+        |},
+        |"subtid":"",
+        |"transid":"4310b3f8-9d89-47a3-9c72-4482f9ef14c9",
+        |"callbackData":"eyJuYW1lIjoiZW5jcnlwdGVkU3RyaW5nIiwicmVnaW1lIjoiZW5jcnlwdGVkU3RyaW5nIiwidGVtcGxhdGVJZCI6ImVuY3J5cHRlZFN0cmluZyIsInBsYXRmb3JtIjoiZW5jcnlwdGVkU3RyaW5nIiwiQ29udGFjdFBvbGljeUdyb3VwSWQiOiIifQ==",
+        |"correlationid":"4310b3f8-9d89-47a3-9c72-4482f9ef14c9"}
+        |}""".stripMargin
   }
 }

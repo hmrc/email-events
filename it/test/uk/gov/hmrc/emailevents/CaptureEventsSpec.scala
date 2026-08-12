@@ -28,9 +28,8 @@ import utils.WireMockSupportProvider
 import org.scalatest.OptionValues.*
 
 import java.util.UUID
-import com.github.tomakehurst.wiremock.client.WireMock.{ created, equalTo, matchingJsonPath, post, urlPathMatching }
+import com.github.tomakehurst.wiremock.client.WireMock.{ created, equalTo, matchingJsonPath, post, serviceUnavailable, urlPathMatching }
 import com.github.tomakehurst.wiremock.http.RequestMethod
-
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.http.Status.OK
 import play.api.mvc.Result
@@ -38,7 +37,7 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers.POST
 import play.api.test.Helpers.*
 import play.api.test.*
-import uk.gov.hmrc.emailevents.models.{ EventIgnored, EventSaved }
+import uk.gov.hmrc.emailevents.models.{ EventIgnored, EventSaveError, EventSaveFailed, EventSaved }
 
 import scala.concurrent.Future
 
@@ -162,6 +161,48 @@ class CaptureEventsSpec
         contentAsString(emailEventsResponse) shouldBe Json
           .toJson(EventIgnored("Event with deliveryStatus UnInterested is ignored and not processed"))
           .toString
+      }
+    }
+
+    "throw InternalServerError" when {
+
+      "event saving is failed" in new TestClass {
+        wireMockServer.stubFor(
+          post(urlPathMatching(emailServiceEndPointUrl))
+            .withRequestBody(
+              matchingJsonPath("$.status", equalTo("Submitted"))
+            )
+            .withRequestBody(
+              matchingJsonPath("$.description", equalTo("Submitted"))
+            )
+            .withRequestBody(
+              matchingJsonPath("$.emailAddress", equalTo("test.dc@digital.hmrc.gov.uk"))
+            )
+            .withRequestBody(
+              matchingJsonPath("$.code", equalTo("7501"))
+            )
+            .withRequestBody(
+              matchingJsonPath("$.correlationId", equalTo("4310b3f8-9d89-47a3-9c72-4482f9ef14c9"))
+            )
+            .willReturn(serviceUnavailable)
+        )
+
+        val emailEventsRequest: FakeRequest[JsValue] =
+          FakeRequest(POST, controllers.routes.EventsController.events().url)
+            .withBody(dataWithSubmittedStatus)
+
+        val emailEventsResponse: Future[Result] = route(application, emailEventsRequest).value
+
+        status(emailEventsResponse) shouldBe INTERNAL_SERVER_ERROR
+        contentAsString(emailEventsResponse) shouldBe Json
+          .toJson(
+            EventSaveFailed(
+              EventSaveError(SERVICE_UNAVAILABLE, s"Event save failed - status code: $SERVICE_UNAVAILABLE")
+            )
+          )
+          .toString
+
+        verifyExactlyOneEndPointUrlHit(emailServiceEndPointUrl, RequestMethod.POST)
       }
     }
   }

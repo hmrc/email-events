@@ -166,7 +166,7 @@ class CaptureEventsSpec
 
     "throw InternalServerError" when {
 
-      "event saving is failed" in new TestClass {
+      "event fails to save" in new TestClass {
         wireMockServer.stubFor(
           post(urlPathMatching(emailServiceEndPointUrl))
             .withRequestBody(

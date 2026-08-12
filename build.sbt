@@ -1,5 +1,7 @@
 import uk.gov.hmrc.DefaultBuildSettings.targetJvm
 
+import scala.collection.immutable.Seq
+
 Global / majorVersion := 1
 Global / scalaVersion := "3.3.6"
 
@@ -17,18 +19,20 @@ lazy val microservice = Project(appName, file("."))
     )
   )
   .settings(
-    Compile / unmanagedResourceDirectories += baseDirectory.value / "resources",
+    Compile / unmanagedResourceDirectories += baseDirectory.value / "resources"
   )
 
 lazy val it = (project in file("it"))
   .enablePlugins(PlayScala)
   .dependsOn(microservice % "test->test")
-
+  .settings(
+    scalacOptions ++= Seq("-Wconf:msg=Flag.*repeatedly:s")
+  )
 
 Test / test := (Test / test)
   .dependsOn(scalafmtCheckAll)
   .value
 
 it / test := (it / Test / test)
-  .dependsOn(scalafmtCheckAll, it/scalafmtCheckAll)
+  .dependsOn(scalafmtCheckAll, it / scalafmtCheckAll)
   .value

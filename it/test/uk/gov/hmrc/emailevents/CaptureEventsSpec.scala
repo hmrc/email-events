@@ -23,7 +23,6 @@ import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.{ Application, Configuration }
 import play.api.libs.json.{ JsValue, Json }
-import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.HeaderCarrier
 import utils.WireMockSupportProvider
 import org.scalatest.OptionValues.*
@@ -37,7 +36,7 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers.POST
 import play.api.test.Helpers.*
 import play.api.test.*
-import uk.gov.hmrc.emailevents.models.EventSaved
+import uk.gov.hmrc.emailevents.models.{ EventIgnored, EventSaved }
 
 import scala.concurrent.Future
 
@@ -69,11 +68,84 @@ class CaptureEventsSpec
             .willReturn(created)
         )
 
-        given headerCarrier: HeaderCarrier = HeaderCarrier()
-
         val emailEventsRequest: FakeRequest[JsValue] =
           FakeRequest(POST, controllers.routes.EventsController.events().url)
             .withBody(dataWithSubmittedStatus)
+
+        val emailEventsResponse: Future[Result] = route(application, emailEventsRequest).value
+
+        status(emailEventsResponse) shouldBe OK
+        contentAsString(emailEventsResponse) shouldBe Json.toJson(EventSaved("true")).toString
+      }
+
+      "deliveryStatus is Delivered" in new TestClass {
+        wireMockServer.stubFor(
+          post(urlPathMatching("/events"))
+            .withRequestBody(
+              matchingJsonPath("$.status", equalTo("Delivered"))
+            )
+            .withRequestBody(
+              matchingJsonPath("$.description", equalTo("Delivered"))
+            )
+            .withRequestBody(
+              matchingJsonPath("$.emailAddress", equalTo("test.dc@digital.hmrc.gov.uk"))
+            )
+            .withRequestBody(
+              matchingJsonPath("$.code", equalTo("7501"))
+            )
+            .withRequestBody(
+              matchingJsonPath("$.correlationId", equalTo("4310b3f8-9d89-47a3-9c72-4482f9ef10ab"))
+            )
+            .willReturn(created)
+        )
+
+        val emailEventsRequest: FakeRequest[JsValue] =
+          FakeRequest(POST, controllers.routes.EventsController.events().url)
+            .withBody(dataWithDeliveredStatus)
+
+        val emailEventsResponse: Future[Result] = route(application, emailEventsRequest).value
+
+        status(emailEventsResponse) shouldBe OK
+        contentAsString(emailEventsResponse) shouldBe Json.toJson(EventSaved("true")).toString
+      }
+
+      "deliveryStatus is UnInterested" in new TestClass {
+        val emailEventsRequest: FakeRequest[JsValue] =
+          FakeRequest(POST, controllers.routes.EventsController.events().url)
+            .withBody(dataWithUnInterestedStatus)
+
+        val emailEventsResponse: Future[Result] = route(application, emailEventsRequest).value
+
+        status(emailEventsResponse) shouldBe ACCEPTED
+        contentAsString(emailEventsResponse) shouldBe Json
+          .toJson(EventIgnored("Event with deliveryStatus UnInterested is ignored and not processed"))
+          .toString
+      }
+
+      "deliveryStatus is Bounce" in new TestClass {
+        wireMockServer.stubFor(
+          post(urlPathMatching("/events"))
+            .withRequestBody(
+              matchingJsonPath("$.status", equalTo("Bounce"))
+            )
+            .withRequestBody(
+              matchingJsonPath("$.description", equalTo("Transient_ContentRejected"))
+            )
+            .withRequestBody(
+              matchingJsonPath("$.emailAddress", equalTo("test.dc@digital.hmrc.gov.uk"))
+            )
+            .withRequestBody(
+              matchingJsonPath("$.code", equalTo("7501"))
+            )
+            .withRequestBody(
+              matchingJsonPath("$.correlationId", equalTo("4310b3f8-9d89-47a3-9c72-4482f9ef16b8"))
+            )
+            .willReturn(created)
+        )
+
+        val emailEventsRequest: FakeRequest[JsValue] =
+          FakeRequest(POST, controllers.routes.EventsController.events().url)
+            .withBody(dataWithBounceStatus)
 
         val emailEventsResponse: Future[Result] = route(application, emailEventsRequest).value
 
@@ -125,6 +197,69 @@ class CaptureEventsSpec
          |}""".stripMargin
     )
 
+    val dataWithUnInterestedStatus: JsValue = Json.parse(
+      s"""{
+         |  "deliveryInfoNotification": {
+         |    "deliveryInfo": {
+         |      "timeStamp": "2022-12-07T14:40:46.886Z",
+         |      "Description": "Submitted",
+         |      "code": "7501",
+         |      "deliveryChannel": "email",
+         |      "additionalInfo": "",
+         |      "destination": "test.dc@digital.hmrc.gov.uk",
+         |      "destinationType": "email",
+         |      "deliveryStatus": "UnInterested"
+         |    },
+         |    "subtid": "",
+         |    "transid": "$transitId",
+         |    "callbackData": "$callBackData",
+         |    "correlationid": "4310b3f8-9d89-47a3-9c72-4482f9ef15e9"
+         |  }
+         |}""".stripMargin
+    )
+
+    val dataWithBounceStatus: JsValue = Json.parse(
+      s"""{
+         |  "deliveryInfoNotification": {
+         |    "deliveryInfo": {
+         |      "timeStamp": "2022-12-07T14:40:46.886Z",
+         |      "Description": "Transient_ContentRejected",
+         |      "code": "7501",
+         |      "deliveryChannel": "email",
+         |      "additionalInfo": "",
+         |      "destination": "test.dc@digital.hmrc.gov.uk",
+         |      "destinationType": "email",
+         |      "deliveryStatus": "Bounce"
+         |    },
+         |    "subtid": "",
+         |    "transid": "$transitId",
+         |    "callbackData": "$callBackData",
+         |    "correlationid": "4310b3f8-9d89-47a3-9c72-4482f9ef16b8"
+         |  }
+         |}""".stripMargin
+    )
+
+    val dataWithDeliveredStatus: JsValue = Json.parse(
+      s"""{
+         |  "deliveryInfoNotification": {
+         |    "deliveryInfo": {
+         |      "timeStamp": "2022-12-07T14:40:46.886Z",
+         |      "Description": "Delivered",
+         |      "code": "7501",
+         |      "deliveryChannel": "email",
+         |      "additionalInfo": "",
+         |      "destination": "test.dc@digital.hmrc.gov.uk",
+         |      "destinationType": "email",
+         |      "deliveryStatus": "Delivered"
+         |    },
+         |    "subtid": "",
+         |    "transid": "$transitId",
+         |    "callbackData": "$callBackData",
+         |    "correlationid": "4310b3f8-9d89-47a3-9c72-4482f9ef10ab"
+         |  }
+         |}""".stripMargin
+    )
+
     val application: Application = new GuiceApplicationBuilder()
       .configure(
         "play.filters.csp.nonce.enabled"        -> false,
@@ -134,8 +269,10 @@ class CaptureEventsSpec
       )
       .configure(config)
       .build()
-    val httpClient: HttpClientV2 = application.injector.instanceOf[HttpClientV2]
+
     val baseUrl: String = s"http://$wireMockHost:$wireMockPort"
+
+    given headerCarrier: HeaderCarrier = HeaderCarrier()
   }
 
 }

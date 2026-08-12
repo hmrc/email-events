@@ -29,6 +29,8 @@ import org.scalatest.OptionValues.*
 
 import java.util.UUID
 import com.github.tomakehurst.wiremock.client.WireMock.{ created, equalTo, matchingJsonPath, post, urlPathMatching }
+import com.github.tomakehurst.wiremock.http.RequestMethod
+
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.http.Status.OK
 import play.api.mvc.Result
@@ -49,7 +51,7 @@ class CaptureEventsSpec
 
       "deliveryStatus is Submitted" in new TestClass {
         wireMockServer.stubFor(
-          post(urlPathMatching("/events"))
+          post(urlPathMatching(emailServiceEndPointUrl))
             .withRequestBody(
               matchingJsonPath("$.status", equalTo("Submitted"))
             )
@@ -76,11 +78,13 @@ class CaptureEventsSpec
 
         status(emailEventsResponse) shouldBe OK
         contentAsString(emailEventsResponse) shouldBe Json.toJson(EventSaved("true")).toString
+
+        verifyExactlyOneEndPointUrlHit(emailServiceEndPointUrl, RequestMethod.POST)
       }
 
       "deliveryStatus is Delivered" in new TestClass {
         wireMockServer.stubFor(
-          post(urlPathMatching("/events"))
+          post(urlPathMatching(emailServiceEndPointUrl))
             .withRequestBody(
               matchingJsonPath("$.status", equalTo("Delivered"))
             )
@@ -107,6 +111,8 @@ class CaptureEventsSpec
 
         status(emailEventsResponse) shouldBe OK
         contentAsString(emailEventsResponse) shouldBe Json.toJson(EventSaved("true")).toString
+
+        verifyExactlyOneEndPointUrlHit(emailServiceEndPointUrl, RequestMethod.POST)
       }
 
       "deliveryStatus is UnInterested" in new TestClass {
@@ -124,7 +130,7 @@ class CaptureEventsSpec
 
       "deliveryStatus is Bounce" in new TestClass {
         wireMockServer.stubFor(
-          post(urlPathMatching("/events"))
+          post(urlPathMatching(emailServiceEndPointUrl))
             .withRequestBody(
               matchingJsonPath("$.status", equalTo("Bounce"))
             )
@@ -151,6 +157,8 @@ class CaptureEventsSpec
 
         status(emailEventsResponse) shouldBe OK
         contentAsString(emailEventsResponse) shouldBe Json.toJson(EventSaved("true")).toString
+
+        verifyExactlyOneEndPointUrlHit(emailServiceEndPointUrl, RequestMethod.POST)
       }
     }
 
@@ -172,6 +180,7 @@ class CaptureEventsSpec
   )
 
   class TestClass {
+    val emailServiceEndPointUrl = "/events"
     val transitId: String = UUID.randomUUID().toString
     val callBackData =
       "eyJuYW1lIjoiZW5jcnlwdGVkU3RyaW5nIiwicmVnaW1lIjoiZW5jcnlwdGVkU3RyaW5nIiwidGVtcGxhdGVJZCI6ImVuY3J5cHRlZFN0cmluZyIsInBsYXRmb3JtIjoiZW5jcnlwdGVkU3RyaW5nIiwiQ29udGFjdFBvbGljeUdyb3VwSWQiOiIifQ=="

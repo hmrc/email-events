@@ -115,19 +115,6 @@ class CaptureEventsSpec
         verifyExactlyOneEndPointUrlHit(emailServiceEndPointUrl, RequestMethod.POST)
       }
 
-      "deliveryStatus is UnInterested" in new TestClass {
-        val emailEventsRequest: FakeRequest[JsValue] =
-          FakeRequest(POST, controllers.routes.EventsController.events().url)
-            .withBody(dataWithUnInterestedStatus)
-
-        val emailEventsResponse: Future[Result] = route(application, emailEventsRequest).value
-
-        status(emailEventsResponse) shouldBe ACCEPTED
-        contentAsString(emailEventsResponse) shouldBe Json
-          .toJson(EventIgnored("Event with deliveryStatus UnInterested is ignored and not processed"))
-          .toString
-      }
-
       "deliveryStatus is Bounce" in new TestClass {
         wireMockServer.stubFor(
           post(urlPathMatching(emailServiceEndPointUrl))
@@ -162,6 +149,21 @@ class CaptureEventsSpec
       }
     }
 
+    "ignore the event" when {
+
+      "deliveryStatus is UnInterested" in new TestClass {
+        val emailEventsRequest: FakeRequest[JsValue] =
+          FakeRequest(POST, controllers.routes.EventsController.events().url)
+            .withBody(dataWithUnInterestedStatus)
+
+        val emailEventsResponse: Future[Result] = route(application, emailEventsRequest).value
+
+        status(emailEventsResponse) shouldBe ACCEPTED
+        contentAsString(emailEventsResponse) shouldBe Json
+          .toJson(EventIgnored("Event with deliveryStatus UnInterested is ignored and not processed"))
+          .toString
+      }
+    }
   }
 
   override def config: Configuration = Configuration(

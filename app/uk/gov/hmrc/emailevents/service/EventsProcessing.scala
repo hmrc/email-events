@@ -35,7 +35,7 @@ class EventsProcessingImpl @Inject() (emailConnector: EmailConnector) extends Ev
   override def apply(rawEvent: RawEvent): Future[EventSaveResult] =
     rawEvent.deliveryInfoNotification.deliveryInfo.deliveryStatus match {
       case UnInterested =>
-        Future.successful(EventIgnored(s"Event is ignored and its not processed"))
+        Future.successful(EventIgnored("Event is ignored and its not processed"))
       case _ =>
         emailConnector.send(
           Event(

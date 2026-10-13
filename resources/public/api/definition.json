@@ -5,9 +5,7 @@
     "context": "misc/email-events",
     "versions": [
       {
-        "access": {
-        "type": "PRIVATE"
-        },
+        "access": "PRIVATE",
         "version": "1.0",
         "status": "STABLE",
         "endpointsEnabled": true

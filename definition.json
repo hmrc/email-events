@@ -8,10 +8,7 @@
     "versions" : [
       {
         "version" : "1.0",
-        "access" : {
-          "type" : "PUBLIC",
-          "whitelistApplicationIds" : []
-        },
+        "access": "PUBLIC",
         "status" : "STABLE",
         "endpoints" : [
           {
